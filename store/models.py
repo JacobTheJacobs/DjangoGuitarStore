@@ -75,6 +75,7 @@ class CartItem(models.Model):
     def __str__(self):
         return self.product
 
+
 # User Buy Orders
 class Order(models.Model):
     token = models.CharField(max_length=250, blank=True)
@@ -98,6 +99,7 @@ class Order(models.Model):
 
     def __str__(self):
         return str(self.id)
+
 
 # Order Buy Item
 class OrderItem(models.Model):
