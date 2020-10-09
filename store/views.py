@@ -1,14 +1,15 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Category, Product, Cart, CartItem,OrderItem,Order
+from .models import Category, Product, Cart, CartItem, OrderItem, Order
 from django.http import HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
 import stripe
 from django.conf import settings
-#auth
+# auth
 from django.contrib.auth.models import Group, User
 from .forms import SignUpForm
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.decorators import login_required
 
 
 def home(request, category_slug=None):
@@ -139,7 +140,7 @@ def cart_detail(request, total=0, counter=0, cart_items=None):
 
                 return redirect('thanks_page', order_details.id)
             except ObjectDoesNotExist:
-                    pass
+                pass
 
         except stripe.error.CardError as e:
             return False, e
@@ -174,7 +175,6 @@ def thanks_page(request, order_id):
     return render(request, 'thankyou.html', {'customer_order': customer_order})
 
 
-
 def signupView(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
@@ -206,8 +206,29 @@ def signinView(request):
     return render(request, 'signin.html', {'form': form})
 
 
-
 def signoutView(request):
     logout(request)
     return redirect('signin')
+
+
+@login_required(redirect_field_name='next', login_url='signin')
+def orderHistory(request):
+    if request.user.is_authenticated:
+        email = str(request.user.email)
+
+        order_details = Order.objects.filter(emailAddress=email)
+
+        print(email)
+
+        print(order_details)
+    return render(request, 'orders_list.html', {'order_details': order_details})
+
+
+@login_required(redirect_field_name='next', login_url='signin')
+def viewOrder(request, order_id):
+    if request.user.is_authenticated:
+        email = str(request.user.email)
+        order = Order.objects.get(id=order_id, emailAddress=email)
+        order_items = OrderItem.objects.filter(order=order)
+    return render(request, 'order_detail.html', {'order': order, 'order_items': order_items})
 
